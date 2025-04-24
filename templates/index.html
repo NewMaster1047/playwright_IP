@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI for Playwright</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 29px 0;
+            font-family: sans-serif;
+        }
+        .hidden {
+            display: none;
+        }
+        .main {
+            width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0px 0px 10px rgb(221, 221, 221);
+        }
+        .title {
+            text-align: center;
+        }
+        .form {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0px 0px 10px rgb(221, 221, 221);
+        }
+        .mini_container {
+            margin-bottom: 16px;
+        }
+        #inn, #full_name, #capcha_input {
+            display: block;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #dfdfdf;
+            outline: none;
+            width: 100%;
+        }
+        .title_inn, .title_full_name {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        #inn:focus {
+            border: 1px solid #adadad;
+            
+        }
+        #full_name:focus {
+            border: 1px solid #adadad;
+        }
+        #capcha_input:focus {
+            border: 1px solid #adadad;
+        }
+        .send {
+            display: block;
+            width: 400px;
+            margin: 0 auto;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #14eb00;
+            font-weight: 600;
+            font-size: 17px;
+            letter-spacing: 1.2px;
+            cursor: pointer;
+        }
+        .send:active {
+            background: #10c000;
+        }
+        .capcha_img {
+            display: block;
+            margin: 0 auto 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <h1 class="title">Form for login</h1>
+        <form class="form" method="post" action="/">
+            <div class="mini_container">
+                <label for="inn" class="title_inn">INN/PINFL</label>
+                <input type="text" name="inn" id="inn" placeholder="inn" required>
+            </div>
+            <div class="mini_container">
+                <label for="password" class="title_full_name">Password</label>
+                <input type="password" name="password" id="full_name" placeholder="Password" required>
+            </div>
+            <input type="submit" class="send" value="Send">
+        </form>
+        {% if data == 'incorrect_password' %}
+            <div class="capcha form">
+                <h1 class="title">Incorrect password</h1>
+            </div>
+        {% elif data == 'complited' %}
+            <div class="capcha form">
+                <h1 class="title">complited</h1>
+            </div>
+        {% elif data == 'inn_not_found' %}
+            <div class="capcha form">
+                <h1 class="title">INN not found</h1>
+            </div>
+        {% elif data == 'again' %}
+            <div class="capcha form">
+                <h1 class="title">Click button again</h1>
+            </div>
+        {% elif data == 'incorrect_password_or_captcha' %}
+            <div class="capcha form">
+                <h1 class="title">Incorrect password or captcha!</h1>
+            </div>
+        {% else %}
+        <div class="capcha form hidden">
+            <h1 class="title">{{ data }}</h1>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
