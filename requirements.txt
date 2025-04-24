@@ -22,6 +22,7 @@ PyMsgBox==1.0.9
 pyperclip==1.9.0
 PyRect==0.2.0
 PyScreeze==1.0.1
+pytesseract==0.3.13
 pytest==8.3.5
 pytest-base-url==2.1.0
 pytest-playwright==0.7.0

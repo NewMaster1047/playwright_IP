@@ -276,6 +276,7 @@ def index():
             print(result)
             return render_template("index.html", data=result)
     else:
+        shutdown_browser()
         return(render_template("index.html", data=data))
 
 
