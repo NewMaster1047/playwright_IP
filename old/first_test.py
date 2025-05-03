@@ -89,7 +89,7 @@ def run(page, inn, password):
     if not loaded:
         return "incorrect_password"
     
-    # page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари").click()
+    page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари").click()
     page.get_by_role("link", name="Электрон шакллар").click()
     page.get_by_role("link", name="Айланмадан олинадиган солиқ").click()
     page.get_by_role("row", name="10190_12").get_by_role("link").click()

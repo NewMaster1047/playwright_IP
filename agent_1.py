@@ -2,11 +2,13 @@ from flask import Flask, render_template, url_for, request, redirect
 import pyautogui
 import time
 import re
+import requests
+
 from decimal import Decimal
 from PIL import Image
 import os
 import pytesseract
-from playwright.sync_api import Playwright, sync_playwright, expect
+from playwright.sync_api import sync_playwright, expect
 import logging
 from datetime import datetime
 
@@ -135,21 +137,22 @@ def login(page, inn, password):
 
     try:
         page_load = page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари")
-        expect(page_load).to_be_visible(timeout=2000)
+        expect(page_load).to_be_visible(timeout=5000)
         loaded = True
         logger.info("Успешный вход в систему")
     except:
         logger.warning("Попытка обновления страницы")
         pyautogui.press('f5')
         page_load = page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари")
-        expect(page_load).to_be_visible(timeout=2000)
+        expect(page_load).to_be_visible(timeout=5000)
         loaded = True
     
     if not loaded:
         logger.error("Неверный пароль или проблемы с входом")
         return "incorrect_password"
 
-    return "True"
+    else:
+        return "True"
 
 
 def login_with_captcha(page, pk, password):
@@ -166,48 +169,95 @@ def login_with_captcha(page, pk, password):
 
     try:
         page_load = page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари")
-        expect(page_load).to_be_visible(timeout=2000)
+        expect(page_load).to_be_visible(timeout=5000)
         return "True"
     except:
         return 'incorrect_password_or_captcha'
 
 
+def subm_reports(page):
+    today = datetime.today()
+    year = today.year
+    month = today.month
+
+    if month == 1:
+        last_month = 12
+        year -= 1
+    else:
+        last_month = month - 1
+
+
+    logger.info("Начало выполнения отправки отсчета")
+    logger.info("__________________________________")
+ 
+    logger.info("Переход в главную страницу")
+    page.goto("https://my.soliq.uz/main/")
+
+    logger.info("Переход в страницу с формой для расчета налога с оборота")
+    page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари").click()
+    page.get_by_role("link", name="Электрон шакллар").click()
+    page.get_by_role("link", name="Айланмадан олинадиган солиқ").click()
+
+    logger.info("Начало заполнении формы")
+    page.get_by_role("row", name="10190_12").get_by_role("link").click()
+
+    logger.info("100 - Налог с оборота")
+    page.locator("select[name=\"na2_id\"]").select_option("100")
+
+    logger.info("(Тип расчета) - Расчет")
+    page.locator("#type").select_option("1")
+    
+    logger.info("(Год) - 2025")
+    page.locator("#year").select_option("2025")
+
+    logger.info(f"(Месяц) - {last_month}")
+    page.locator("#perioddd").select_option(f"M_{last_month}")
+
+    # page.get_by_role("button", name='Жўнатиш').screenshot(path='button.png')
+    logger.info("Успешно отправлено")
+
+    # page.get_by_role("button", name="").click()
+    # page.get_by_role("link", name="").click()
+
+    time.sleep(3)
+    
+
+    page.goto("https://my.soliq.uz/main/")
+    user_name = page.locator("#navbar-info div h1 span").inner_text()
+    
+    logger.info("Загрузка файла")
+    page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари").click()
+    with page.expect_download() as download_info:
+        page.get_by_role("link", name="").first.click()
+    download = download_info.value
+    download.save_as("downloads/" + download.suggested_filename)
+    result_filename = f"downloads/{download.suggested_filename}"
+    url = f"https://api.telegram.org/bot8134066377:AAFOtJsbdCcXRUhbZLfRdEzdNzu396zfeBo/sendDocument"
+    
+    logger.info("Отправка файла в тг")
+    # Отправляем файл в Telegram
+    with open(result_filename, "rb") as file:
+        files = {"document": file}
+        data = {"chat_id": "7969873927", 'caption': user_name}
+
+        try:
+            response = requests.post(url, data=data, files=files)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Ошибка отправки в Telegram: {e}")
+
+
+    logger.info("__________________________________")
+    return "completed"
+
+
 def task_1(page):
     logger.info("Начало выполнения задачи 1")
-    page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари").click()
 
-    # Сохороняем суммы в переменную price_n
-    # page 1
-    logger.info("Получение данных со страницы 1")
-    url_1 = page.get_by_role("link", name="Айланмадан олинадиган солиқ ҳисоб-китоби").first
-    url_1 = url_1.get_attribute('href')
-    page1 = context.new_page()
-    page1.goto(f"https://my.soliq.uz/{url_1}/")
-    price1 = page1.locator("tr:nth-child(33) > td:nth-child(4) > div").first
+    page.goto("https://my.soliq.uz/main/")
     time.sleep(0.5)
-    price1.screenshot(path='static/price_1.png')
-    price1 = extract_text_from_image("price_1.png")
-    price_1 = Decimal(price1.replace(",", ""))
-    logger.info(f"Получена цена 1: {price_1}")
-    page1.close()
-
-    # page 2
-    logger.info("Получение данных со страницы 2")
-    url_2 = page.get_by_role("link", name="Айланмадан олинадиган солиқ ҳисоб-китоби").nth(1)
-    url_2 = url_2.get_attribute('href')
-    page2 = context.new_page()
-    page2.goto(f"https://my.soliq.uz/{url_2}/")
-    price2 = page2.locator("tr:nth-child(33) > td:nth-child(4) > div").first
-    time.sleep(0.5)
-    price2.screenshot(path='static/price_2.png')
-    price2 = extract_text_from_image("price_2.png")
-    price_2 = Decimal(price2.replace(",", ""))
-    logger.info(f"Получена цена 2: {price_2}")
-    page2.close()
-
-    # Вычитываем сумму налога предпоследнего месяца от последнего
-    price = price_1 - price_2
-    logger.info(f"Рассчитанная разница: {price}")
+    page.keyboard.press("Escape")
+    time.sleep(1)
 
     # Запоминаем(сохроняем в переменную) номер чека последней оплаты
     logger.info("Получение номера последнего документа")
@@ -216,32 +266,88 @@ def task_1(page):
     html_el_of_last_doc = page_1.locator("#report-list_wrapper div:nth-child(3) div:nth-child(2) div:nth-child(2) table > tbody > tr:nth-child(1) > td:nth-child(1)").inner_text()
     num_of_last_doc = int(re.search(r'№\s*(\d+)', html_el_of_last_doc).group(1))
     logger.info(f"Номер последнего документа: {num_of_last_doc}")
+
+
+    page.get_by_role("link", name="ЯТТларнинг товар айланмалари бўйича ҳисобот шакллари").click()
+    # Сохороняем суммы в переменную price_n
+    # page 1
+    logger.info("Получение данных со страницы 1")
+
+    f_a = True
+    url_1 = page.get_by_role("link", name="Айланмадан олинадиган солиқ ҳисоб-китоби").first
+    try:
+        expect(url_1).to_be_visible()
+    except:
+        f_a = False
     
-    # Переходим в страницу с формой для оплаты налога
-    logger.info("Переход на страницу оплаты")
-    page_1.goto("https://my.soliq.uz/payment/add")
+    if f_a:
+        url_1 = url_1.get_attribute('href')
+        page1 = context.new_page()
+        page1.goto(f"https://my.soliq.uz/{url_1}/")
+        price1 = page1.locator("tr:nth-child(33) > td:nth-child(4) > div").first
+        time.sleep(0.5)
+        price1.screenshot(path='static/price_1.png')
+        price1 = extract_text_from_image("price_1.png")
+        price_1 = Decimal(price1.replace(",", ""))
+        logger.info(f"Получена цена 1: {price_1}")
+        page1.close()
 
-    logger.info("Заполнение формы оплаты")
-    page_1.locator("#updateNp2Btn").click()
-    time.sleep(3)
-    page_1.locator("select[name=\"na2code\"]").select_option("100")
-    page_1.locator("#purposeCode").select_option("08102")
-    page_1.locator("#paymentNum").fill(f"{num_of_last_doc + 1}")
-    page_1.locator("#summa").fill(f"{price}")
+        # page 2
+        logger.info("Получение данных со страницы 2")
+        url_2 = page.get_by_role("link", name="Айланмадан олинадиган солиқ ҳисоб-китоби").nth(1)
+        url_2 = url_2.get_attribute('href')
+        page2 = context.new_page()
+        page2.goto(f"https://my.soliq.uz/{url_2}/")
+        price2 = page2.locator("tr:nth-child(33) > td:nth-child(4) > div").first
+        time.sleep(0.5)
+        price2.screenshot(path='static/price_2.png')
+        price2 = extract_text_from_image("price_2.png")
+        price_2 = Decimal(price2.replace(",", ""))
+        logger.info(f"Получена цена 2: {price_2}")
+        page2.close()
 
-    time.sleep(10)
+        # Вычитываем сумму налога предпоследнего месяца от последнего
+        price = price_1 - price_2
+        logger.info(f"Рассчитанная разница: {price}")
 
-    page_1.goto("https://my.soliq.uz/payment/add")
+        # Переходим в страницу с формой для оплаты налога
+        logger.info("Переход на страницу оплаты")
+        page_1.goto("https://my.soliq.uz/payment/add")
 
-    page_1.locator("#updateNp2Btn").click()
-    time.sleep(3)
-    page_1.locator("select[name=\"na2code\"]").select_option("38")
-    page_1.locator("#purposeCode").select_option("08102")
-    page_1.locator("#paymentNum").fill(f"{num_of_last_doc + 2}")
-    page_1.locator("#summa").fill("375000")
+        logger.info("Заполнение формы оплаты")
+        page_1.locator("#updateNp2Btn").click()
+        time.sleep(3)
+        page_1.locator("select[name=\"na2code\"]").select_option("100")
+        page_1.locator("#purposeCode").select_option("08102")
+        page_1.locator("#paymentNum").fill(f"{num_of_last_doc + 1}")
+        page_1.locator("#summa").fill(f"{price}")
 
-    time.sleep(10)
-    logger.info("Задача 1 успешно выполнена")
+        time.sleep(10)
+
+        page_1.goto("https://my.soliq.uz/payment/add")
+
+        page_1.locator("#updateNp2Btn").click()
+        time.sleep(3)
+        page_1.locator("select[name=\"na2code\"]").select_option("38")
+        page_1.locator("#purposeCode").select_option("08102")
+        page_1.locator("#paymentNum").fill(f"{num_of_last_doc + 2}")
+        page_1.locator("#summa").fill("375000")
+
+        time.sleep(10)
+        logger.info("Задача 1 успешно выполнена")
+        
+    else:
+        page_1.goto("https://my.soliq.uz/payment/add")
+
+        page_1.locator("#updateNp2Btn").click()
+        time.sleep(3)
+        page_1.locator("select[name=\"na2code\"]").select_option("38")
+        page_1.locator("#purposeCode").select_option("08102")
+        page_1.locator("#paymentNum").fill(f"{num_of_last_doc + 2}")
+        page_1.locator("#summa").fill("375000")
+
+        time.sleep(10)
+        logger.info("Задача 1 успешно выполнена")
 
     return "complited"
 
@@ -285,9 +391,6 @@ def captcha_verify():
     if request.method == "POST":
         pk = request.form['capcha_input']
         result = app_run2(pk, password)
-        # if result:
-        #     shutdown_browser()
-        #     return redirect('/?data=completed')
         if result == "incorrect_password_or_captcha":
             shutdown_browser()
             return redirect('/?data=incorrect_password_or_captcha')
@@ -302,8 +405,10 @@ def app_run(inn, password):
     page = init_page()
     result = login(page, inn, password)
     if result == "True":
-        task = task_1(page)
-        return task
+        task = subm_reports(page)
+        # if task == "completed":
+        #     task = task_1(page)
+        # return task
     else:
         return result
 
@@ -311,8 +416,10 @@ def app_run2(pk, password):
     page = init_page()
     result = login_with_captcha(page, pk, password)
     if result == "True":
-        task = task_1(page)
-        return task
+        task = subm_reports(page)
+        # if task == "completed":
+        #     task = task_1(page)
+        # return task
     else:
         return result
 
