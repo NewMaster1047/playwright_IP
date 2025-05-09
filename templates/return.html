@@ -84,12 +84,26 @@
 </head>
 <body>
     <div class="main">
-        <form method="post" class="capcha form">
-            <div class="mini_container">
-                <img src="{{url_for('static', filename='screenshot.png')}}" class="capcha_img">
-                <input type="text" name="capcha_input" id="capcha_input" placeholder="Help me find my family! :D">
+        {% if data == 'incorrect_password_or_captcha' %}
+            <div class="capcha form">
+                <h1 class="title">Incorrect password or captcha!</h1>
             </div>
-            <input type="submit" class="send" value="Send">
+        {% elif data == 'complited' %}
+            <div class="capcha form">
+                <h1 class="title">complited</h1>
+            </div>
+        {% elif data == 'inn_not_found' %}
+            <div class="capcha form">
+                <h1 class="title">INN not found</h1>
+            </div>
+        {% else %}
+        <div class="capcha form hidden">
+            <h1 class="title">{{ data }}</h1>
+        </div>
+        {% endif %}
+
+        <form class="form" method="post" action="/return">
+            <a href="/" class="send">Return</a>
         </form>
     </div>
 </body>
