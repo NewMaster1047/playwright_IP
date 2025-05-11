@@ -284,18 +284,24 @@ def main_page():
         tax_375 = 'tax_375' in request.form
         na2codes = request.form.getlist('na2code[]')
         amounts = request.form.getlist('amount[]')
+        pk = request.form.get('capcha_input', None)
+        if pk:
+            pk = pk.strip()  # Удаляем пробелы
         global logger
         logger, log_filename = setup_logger(inn, timestamp)
+        logger.info(f"Получены данные формы: inn={inn}, tax_payment={tax_payment}, tax_375={tax_375}, na2codes={na2codes}, amounts={amounts}, pk={pk}")
+        if not inn or not password:
+            logger.error("INN или пароль не предоставлены")
+            return redirect("/return?data=form_error")
         try:
-            pk = request.form.get('capcha_input')
-            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, log_filename, pk)
+            # Передаем pk только если оно непустое и капча отображается
+            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, log_filename, pk if pk and data == 'captcha_is_visible' else None)
             shutdown_browser()
             return redirect(f"/return?data={result}")
         except Exception as e:
             logger.error(f"Ошибка при выполнении запроса: {str(e)}")
-            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, log_filename)
             shutdown_browser()
-            return redirect(f"/return?data={result}")
+            return redirect("/return?data=server_error")
 
 @app.route('/return', methods=['GET'])
 def return_page():
