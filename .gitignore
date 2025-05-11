@@ -20,4 +20,4 @@ __pycache__/
 *.log
 
 reports/
-static.
+static/

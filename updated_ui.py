@@ -78,6 +78,7 @@ def login(page, inn, password, pk=None):
     page.locator("#dropdownMenu1").click()
     prefixes = ["INN", "PINFL"]
     found = False
+    pk = pk
     for prefix in prefixes:
         try:
             user = page.get_by_role("link", name=f"{prefix}: {inn} ")
@@ -91,8 +92,10 @@ def login(page, inn, password, pk=None):
     if not found:
         logger.error(f"Пользователь с ИНН {inn} не найден")
         return "inn_not_found"
-    if pk is not None:
-        logger.info("Ввод текста капчи")
+    if pk != None:
+        logger.info(f"Ввод текста капчи: {pk}")
+        print(type(pk))
+        print(pk)
         page.get_by_placeholder("Spamdan himoya").fill(pk)
         expect(page.get_by_role("button", name=" Kirish")).to_be_visible()
         page.get_by_role("button", name=" Kirish").click()
@@ -295,7 +298,7 @@ def main_page():
             return redirect("/return?data=form_error")
         try:
             # Передаем pk только если оно непустое и капча отображается
-            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, log_filename, pk if pk and data == 'captcha_is_visible' else None)
+            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, log_filename, pk if pk != None else None)
             shutdown_browser()
             return redirect(f"/return?data={result}")
         except Exception as e:
