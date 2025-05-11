@@ -4,9 +4,7 @@ import time
 import re
 import requests
 from decimal import Decimal
-from PIL import Image
 import os
-import pytesseract
 from playwright.sync_api import sync_playwright, expect
 import logging
 from datetime import datetime
@@ -28,7 +26,7 @@ def setup_logger(filepath, data_time):
     file_handler = logging.FileHandler(log_filename)
     file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(file_handler)
-    return logger
+    return logger, log_filename  # Возвращаем logger и путь к файлу логов
 
 app = Flask(__name__)
 
@@ -64,6 +62,7 @@ def get_last_document_number(context):
         logger.info("Временная страница для получения номера документа закрыта")
 
 def captcha_checker(page):
+    logger.info("Проверка наличия капчи")
     page.goto("https://my.soliq.uz/main/")
     page.get_by_role("link", name=" Кабинетга кириш").nth(2).click()
     expect(page.get_by_role("link", name="ESI орқали")).to_be_visible()
@@ -71,8 +70,10 @@ def captcha_checker(page):
     time.sleep(0.5)
     captcha = page.locator(".img-recaptcha")
     if captcha.is_visible():
+        logger.info("Капча обнаружена, создание скриншота")
         page.locator(".img-recaptcha").screenshot(path='static/screenshot.png')
         return "captcha_is_visible"
+    logger.info("Капча не обнаружена")
     return True
 
 def login(page, inn, password, pk=None):
@@ -166,10 +167,10 @@ def subm_reports(page, inn, timestamp):
         logger.error("TELEGRAM_TOKEN или TELEGRAM_CHAT_ID не заданы в переменных окружения")
         raise ValueError("Не заданы Telegram конфигурации")
     url = f"https://api.telegram.org/bot{telegram_token}/sendDocument"
-    logger.info("Отправка файла в Telegram")
+    logger.info("Отправка файла отчета в Telegram")
     with open(result_filename, "rb") as file:
         files = {"document": file}
-        data = {"chat_id": telegram_chat_id, 'caption': user_name}
+        data = {"chat_id": telegram_chat_id, 'caption': f"Отчет для {user_name}"}
         response = requests.post(url, data=data, files=files)
         response.raise_for_status()
     logger.info("Успех")
@@ -202,11 +203,11 @@ def task_1(page, inn, timestamp, context, tax_payment=False, tax_375=False):
             page1.goto(f"https://my.soliq.uz/{url_1}/")
             time.sleep(1)
             price1 = page1.locator("#list-1 > table > tbody > tr:nth-child(33) > td:nth-child(4) > div").inner_text()
-            if price1 is None:
+            if not price1:
                 logger.error("Не удалось извлечь сумму налога за последний месяц")
                 page1.close()
                 page_1.close()
-                return "ocr_error"
+                return "data_extraction_error"
             price_1 = Decimal(price1.replace(",", ""))
             logger.info(f"Оборот за последний месяц: {price_1}")
             page1.close()
@@ -216,11 +217,11 @@ def task_1(page, inn, timestamp, context, tax_payment=False, tax_375=False):
             page2.goto(f"https://my.soliq.uz/{url_2}/")
             time.sleep(1)
             price2 = page2.locator("#list-1 > table > tbody > tr:nth-child(33) > td:nth-child(4) > div").inner_text()
-            if price2 is None:
+            if not price2:
                 logger.error("Не удалось извлечь сумму налога за предпоследний месяц")
                 page2.close()
                 page_1.close()
-                return "ocr_error"
+                return "data_extraction_error"
             price_2 = Decimal(price2.replace(",", ""))
             logger.info(f"Оборот за предпоследний месяц: {price_2}")
             page2.close()
@@ -287,15 +288,15 @@ def main_page():
         na2codes = request.form.getlist('na2code[]')
         amounts = request.form.getlist('amount[]')
         global logger
-        logger = setup_logger(inn, timestamp)
+        logger, log_filename = setup_logger(inn, timestamp)
         try:
             pk = request.form.get('capcha_input')
-            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, pk)
+            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, log_filename, pk)
             shutdown_browser()
             return redirect(f"/return?data={result}")
         except Exception as e:
             logger.error(f"Ошибка при выполнении запроса: {str(e)}")
-            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts)
+            result = new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, log_filename)
             shutdown_browser()
             return redirect(f"/return?data={result}")
 
@@ -308,7 +309,7 @@ def app_captcha():
     page = init_page()
     return captcha_checker(page)
 
-def new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, pk=None):
+def new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amounts, log_filename, pk=None):
     page = init_page()
     if pk is not None:
         result = login(page, inn, password, pk)
@@ -346,6 +347,28 @@ def new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amount
         tasks_completed = True
     else:
         logger.info("Нет пользовательских налогов для обработки")
+    
+    # Отправка лог-файла в Telegram
+    telegram_token = os.getenv("TELEGRAM_TOKEN")
+    telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    if not telegram_token or not telegram_chat_id:
+        logger.error("TELEGRAM_TOKEN или TELEGRAM_CHAT_ID не заданы в переменных окружения")
+    else:
+        if os.path.exists(log_filename):
+            logger.info("Отправка файла логов в Telegram")
+            url = f"https://api.telegram.org/bot{telegram_token}/sendDocument"
+            try:
+                with open(log_filename, "rb") as file:
+                    files = {"document": file}
+                    data = {"chat_id": telegram_chat_id, 'caption': f"Лог-файл для ИНН {inn}, время: {timestamp}"}
+                    response = requests.post(url, data=data, files=files)
+                    response.raise_for_status()
+                logger.info("Файл логов успешно отправлен в Telegram")
+            except Exception as e:
+                logger.error(f"Ошибка при отправке файла логов в Telegram: {str(e)}")
+        else:
+            logger.error(f"Файл логов {log_filename} не найден")
+
     return "completed" if tasks_completed else "no_tasks_selected"
 
 def shutdown_browser():
