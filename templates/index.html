@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +10,6 @@
             margin: 0;
             padding: 0;
         }
-
         body {
             margin: 0;
             padding: 29px 0;
@@ -19,11 +17,9 @@
             background-color: #1a1a1a;
             color: #ffffff;
         }
-
         .hidden {
             display: none;
         }
-
         .main {
             width: 600px;
             margin: 0 auto;
@@ -32,29 +28,21 @@
             background-color: #2d2d2d;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
         .title {
             text-align: center;
             color: #ffffff;
             margin-bottom: 20px;
         }
-
         .form {
             margin-bottom: 20px;
             padding: 20px;
             border-radius: 14px;
             background-color: #363636;
         }
-
         .mini_container {
             margin-bottom: 16px;
         }
-
-        #inn,
-        #full_name,
-        #capcha_input,
-        select,
-        input[type="number"] {
+        #inn, #password, #capcha_input, select, input[type="number"] {
             display: block;
             padding: 12px;
             border-radius: 8px;
@@ -65,25 +53,17 @@
             color: #ffffff;
             margin-bottom: 10px;
         }
-
-        .title_inn,
-        .title_full_name {
+        .title_inn, .title_password, .title_capcha {
             display: block;
             font-size: 16px;
             font-weight: 500;
             margin-bottom: 8px;
             color: #e0e0e0;
         }
-
-        #inn:focus,
-        #full_name:focus,
-        #capcha_input:focus,
-        select:focus,
-        input[type="number"]:focus {
+        #inn:focus, #password:focus, #capcha_input:focus, select:focus, input[type="number"]:focus {
             border: 1px solid #666;
             box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
         }
-
         .send {
             display: block;
             width: 100%;
@@ -98,15 +78,12 @@
             cursor: pointer;
             transition: background-color 0.2s;
         }
-
         .send:hover {
             background: #45a049;
         }
-
         .send:active {
             background: #3d8b40;
         }
-
         .add-tax-btn {
             background: #2196F3;
             color: white;
@@ -118,11 +95,9 @@
             margin-bottom: 20px;
             transition: background-color 0.2s;
         }
-
         .add-tax-btn:hover {
             background: #1976D2;
         }
-
         .tax-item {
             background: #2d2d2d;
             padding: 15px;
@@ -133,7 +108,6 @@
             gap: 10px;
             align-items: flex-start;
         }
-
         .delete-btn {
             background: #f44336;
             color: white;
@@ -146,27 +120,27 @@
             height: 45px;
             transition: background-color 0.2s;
         }
-
         .delete-btn:hover {
             background: #d32f2f;
         }
-
         .tax-inputs {
             flex-grow: 1;
         }
-
         .checkbox-container {
             display: flex;
             align-items: center;
             margin-bottom: 15px;
         }
-
         .checkbox-container input[type="checkbox"] {
             margin-right: 10px;
         }
-
         .checkbox-container label {
             color: #e0e0e0;
+        }
+        .capcha_img {
+            display: block;
+            margin: 0 auto 20px auto;
+            border-radius: 12px;
         }
     </style>
 </head>
@@ -179,28 +153,28 @@
             </div>
             <div class="checkbox-container">
                 <input type="checkbox" name="tax_375" id="tax_375" checked>
-                <label for="tax_375">Налог: 375 000сум</label>
+                <label for="tax_375">Налог: 375 000 сум</label>
             </div>
-            <br>
             <div class="mini_container">
                 <label for="inn" class="title_inn">INN/PINFL</label>
-                <input type="text" name="inn" id="inn" placeholder="inn" required>
+                <input type="text" name="inn" id="inn" placeholder="INN/PINFL" required>
             </div>
             <div class="mini_container">
-                <label for="password" class="title_full_name">Password</label>
-                <input type="password" name="password" id="full_name" placeholder="Password" required>
+                <label for="password" class="title_password">Password</label>
+                <input type="password" name="password" id="password" placeholder="Password" required>
             </div>
-
+            <div class="mini_container {{ 'hidden' if data != 'captcha_is_visible' else '' }}">
+                <label for="capcha_input" class="title_capcha">Captcha</label>
+                <img src="{{ url_for('static', filename='screenshot.png') }}" class="capcha_img" alt="Captcha">
+                <input type="text" name="capcha_input" id="capcha_input" placeholder="Enter captcha">
+            </div>
             <div id="tax-container">
                 <!-- Tax items will be added here dynamically -->
             </div>
-
             <button type="button" class="add-tax-btn" onclick="addTaxItem()">Добавить налог</button>
-            
             <input type="submit" class="send" value="Send">
         </form>
     </div>
-
     <script>
         function addTaxItem() {
             const container = document.getElementById('tax-container');
@@ -208,14 +182,14 @@
             taxItem.className = 'tax-item';
             taxItem.innerHTML = `
                 <div class="tax-inputs">
-                    <select class="form-control" name="na2code[]">
-                        <option value="">Виды налогов</option>
+                    <select class="form-control" name="na2code[]" required>
+                        <option value="" disabled selected>Выберите налог</option>
                         <option value="38">38 Социальный налог</option>
                         <option value="47">47 Фиксированный налог</option>
                         <option value="100">100 Налог с оборота</option>
                         <option value="199">199 ФРНО-199</option>
                     </select>
-                    <input type="number" name="amount[]" placeholder="Сумма" required>
+                    <input type="number" name="amount[]" placeholder="Сумма" min="0" required>
                 </div>
                 <button type="button" class="delete-btn" onclick="this.parentElement.remove()">Удалить</button>
             `;

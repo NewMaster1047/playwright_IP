@@ -41,33 +41,6 @@
             background-color: #2d2d2d;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .mini_container {
-            margin-bottom: 16px;
-        }
-        #inn, #full_name, #capcha_input {
-            display: block;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #404040;
-            outline: none;
-            width: 100%;
-            background-color: #333333;
-            color: #ffffff;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-        .title_inn, .title_full_name {
-            display: block;
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 10px;
-            margin-bottom: 10px;
-            color: #e0e0e0;
-        }
-        #inn:focus, #full_name:focus, #capcha_input:focus {
-            border-color: #4a9eff;
-            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
-        }
         .send {
             display: block;
             width: 400px;
@@ -93,33 +66,43 @@
             background: #2d6da3;
             transform: translateY(0);
         }
-        .capcha_img {
-            display: block;
-            margin: 0 auto 20px auto;
-            border-radius: 12px;
-        }
     </style>
 </head>
 <body>
     <div class="main">
         {% if data == 'incorrect_password_or_captcha' %}
-            <div class="capcha form">
+            <div class="form">
                 <h1 class="title">Incorrect password or captcha!</h1>
             </div>
-        {% elif data == 'complited' %}
-            <div class="capcha form">
-                <h1 class="title">complited</h1>
+        {% elif data == 'completed' %}
+            <div class="form">
+                <h1 class="title">Completed</h1>
             </div>
         {% elif data == 'inn_not_found' %}
-            <div class="capcha form">
+            <div class="form">
                 <h1 class="title">INN not found</h1>
             </div>
+        {% elif data == 'no_tasks_selected' %}
+            <div class="form">
+                <h1 class="title">No tasks selected</h1>
+            </div>
+        {% elif data == 'form_error' %}
+            <div class="form">
+                <h1 class="title">Form error: Mismatch in tax fields</h1>
+            </div>
+        {% elif data == 'invalid_tax_data' %}
+            <div class="form">
+                <h1 class="title">Invalid tax data</h1>
+            </div>
+        {% elif data == 'ocr_error' %}
+            <div class="form">
+                <h1 class="title">Error: Unable to extract tax amount</h1>
+            </div>
         {% else %}
-        <div class="capcha form hidden">
-            <h1 class="title">{{ data }}</h1>
-        </div>
+            <div class="form hidden">
+                <h1 class="title">{{ data }}</h1>
+            </div>
         {% endif %}
-
         <form class="form" method="post" action="/return">
             <a href="/" class="send">Return</a>
         </form>
