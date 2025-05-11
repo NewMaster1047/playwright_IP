@@ -62,7 +62,6 @@ def get_last_document_number(context):
         logger.info("Временная страница для получения номера документа закрыта")
 
 def captcha_checker(page):
-    logger.info("Проверка наличия капчи")
     page.goto("https://my.soliq.uz/main/")
     page.get_by_role("link", name=" Кабинетга кириш").nth(2).click()
     expect(page.get_by_role("link", name="ESI орқали")).to_be_visible()
@@ -70,10 +69,8 @@ def captcha_checker(page):
     time.sleep(0.5)
     captcha = page.locator(".img-recaptcha")
     if captcha.is_visible():
-        logger.info("Капча обнаружена, создание скриншота")
         page.locator(".img-recaptcha").screenshot(path='static/screenshot.png')
         return "captcha_is_visible"
-    logger.info("Капча не обнаружена")
     return True
 
 def login(page, inn, password, pk=None):
