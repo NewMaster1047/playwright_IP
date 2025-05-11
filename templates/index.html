@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,85 +8,180 @@
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
+
         body {
             margin: 0;
             padding: 29px 0;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
         }
+
         .hidden {
             display: none;
         }
+
         .main {
             width: 600px;
             margin: 0 auto;
             padding: 20px;
             border-radius: 14px;
-            box-shadow: 0px 0px 10px rgb(221, 221, 221);
+            background-color: #2d2d2d;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .title {
             text-align: center;
+            color: #ffffff;
+            margin-bottom: 20px;
         }
+
         .form {
             margin-bottom: 20px;
             padding: 20px;
             border-radius: 14px;
-            box-shadow: 0px 0px 10px rgb(221, 221, 221);
+            background-color: #363636;
         }
+
         .mini_container {
             margin-bottom: 16px;
         }
-        #inn, #full_name, #capcha_input {
+
+        #inn,
+        #full_name,
+        #capcha_input,
+        select,
+        input[type="number"] {
             display: block;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
-            border: 1px solid #dfdfdf;
+            border: 1px solid #4a4a4a;
             outline: none;
             width: 100%;
-        }
-        .title_inn, .title_full_name {
-            display: block;
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 10px;
+            background-color: #2d2d2d;
+            color: #ffffff;
             margin-bottom: 10px;
         }
-        #inn:focus {
-            border: 1px solid #adadad;
-            
+
+        .title_inn,
+        .title_full_name {
+            display: block;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #e0e0e0;
         }
-        #full_name:focus {
-            border: 1px solid #adadad;
+
+        #inn:focus,
+        #full_name:focus,
+        #capcha_input:focus,
+        select:focus,
+        input[type="number"]:focus {
+            border: 1px solid #666;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
         }
-        #capcha_input:focus {
-            border: 1px solid #adadad;
-        }
+
         .send {
             display: block;
-            width: 400px;
-            margin: 0 auto;
-            padding: 10px;
+            width: 100%;
+            padding: 12px;
             border: none;
             border-radius: 8px;
-            background: #14eb00;
+            background: #4CAF50;
+            color: white;
             font-weight: 600;
-            font-size: 17px;
-            letter-spacing: 1.2px;
+            font-size: 16px;
+            letter-spacing: 1px;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
+
+        .send:hover {
+            background: #45a049;
+        }
+
         .send:active {
-            background: #10c000;
+            background: #3d8b40;
         }
-        .capcha_img {
-            display: block;
-            margin: 0 auto 20px auto;
+
+        .add-tax-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: background-color 0.2s;
+        }
+
+        .add-tax-btn:hover {
+            background: #1976D2;
+        }
+
+        .tax-item {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            position: relative;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            flex-shrink: 0;
+            height: 45px;
+            transition: background-color 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+
+        .tax-inputs {
+            flex-grow: 1;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .checkbox-container label {
+            color: #e0e0e0;
         }
     </style>
 </head>
 <body>
     <div class="main">
-        <h1 class="title">Form for login</h1>
         <form class="form" method="post" action="/">
+            <div class="checkbox-container">
+                <input type="checkbox" name="tax_payment" id="tax_payment" checked>
+                <label for="tax_payment">Расчет налога с оборота</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" name="tax_375" id="tax_375" checked>
+                <label for="tax_375">Налог: 375 000сум</label>
+            </div>
+            <br>
             <div class="mini_container">
                 <label for="inn" class="title_inn">INN/PINFL</label>
                 <input type="text" name="inn" id="inn" placeholder="inn" required>
@@ -94,15 +190,37 @@
                 <label for="password" class="title_full_name">Password</label>
                 <input type="password" name="password" id="full_name" placeholder="Password" required>
             </div>
-            {% if data == 'captcha_is_visible' %}
-            <div class="mini_container">
-                <img src="{{url_for('static', filename='screenshot.png')}}" class="capcha_img">
-                <input type="text" name="capcha_input" id="capcha_input" placeholder="Help me find my family! :D" required>
+
+            <div id="tax-container">
+                <!-- Tax items will be added here dynamically -->
             </div>
-            {% endif %}
+
+            <button type="button" class="add-tax-btn" onclick="addTaxItem()">Добавить налог</button>
+            
             <input type="submit" class="send" value="Send">
         </form>
-        
     </div>
+
+    <script>
+        function addTaxItem() {
+            const container = document.getElementById('tax-container');
+            const taxItem = document.createElement('div');
+            taxItem.className = 'tax-item';
+            taxItem.innerHTML = `
+                <div class="tax-inputs">
+                    <select class="form-control" name="na2code[]">
+                        <option value="">Виды налогов</option>
+                        <option value="38">38 Социальный налог</option>
+                        <option value="47">47 Фиксированный налог</option>
+                        <option value="100">100 Налог с оборота</option>
+                        <option value="199">199 ФРНО-199</option>
+                    </select>
+                    <input type="number" name="amount[]" placeholder="Сумма" required>
+                </div>
+                <button type="button" class="delete-btn" onclick="this.parentElement.remove()">Удалить</button>
+            `;
+            container.appendChild(taxItem);
+        }
+    </script>
 </body>
 </html>

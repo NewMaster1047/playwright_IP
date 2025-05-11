@@ -66,7 +66,7 @@ def init_page():
 
         # For linux
         # browser = playwright.chromium.launch_persistent_context(
-        #     user_data_dir="/home/newmaster1047/.config/chromium",
+        #     user_data_dir="/home/server/.config/chromium",
         #     headless=False,
         #     executable_path="/usr/bin/google-chrome",
         #     args=[
@@ -311,19 +311,6 @@ def task_1(page):
     logger.info("Выполнено")
 
     return "complited"
-
-
-    if request.method == "POST":
-        pk = request.form['capcha_input']
-        result = app_run2(pk, password)
-        if result == "incorrect_password_or_captcha":
-            shutdown_browser()
-            return redirect('/?data=incorrect_password_or_captcha')
-        else:
-            shutdown_browser()
-            return redirect(f"/?data={result}")
-    else:
-        return render_template("captcha.html")
 
 
 @app.route('/', methods=['POST', 'GET'])
