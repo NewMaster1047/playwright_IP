@@ -30,27 +30,12 @@ def setup_logger(filepath, data_time):
     logger.addHandler(file_handler)
     return logger
 
-# Установка пути к Tesseract из переменной окружения
-pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_CMD", r'C:\Program Files\Tesseract-OCR\tesseract.exe')
 app = Flask(__name__)
 
 playwright = None
 browser = None
 page = None
 context = None
-
-def extract_text_from_image(image_name):
-    image_path = os.path.join('static', image_name)
-    if not os.path.exists(image_path):
-        logger.error(f"Файл {image_path} не найден")
-        return None
-    image = Image.open(image_path)
-    text = pytesseract.image_to_string(image, lang='rus+eng')
-    if text is None:
-        logger.error(f"Не удалось извлечь текст из изображения {image_name}")
-        return None
-    logger.info(f"Извлечен текст из изображения {image_name}: {text}")
-    return text
 
 def init_page():
     global playwright, browser, page, context
