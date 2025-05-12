@@ -94,8 +94,6 @@ def login(page, inn, password, pk=None):
         return "inn_not_found"
     if pk != None:
         logger.info(f"Ввод текста капчи: {pk}")
-        print(type(pk))
-        print(pk)
         page.get_by_placeholder("Spamdan himoya").fill(pk)
         expect(page.get_by_role("button", name=" Kirish")).to_be_visible()
         page.get_by_role("button", name=" Kirish").click()
@@ -324,11 +322,9 @@ def new_app_run(inn, password, timestamp, tax_payment, tax_375, na2codes, amount
     if result != "True":
         return result
     tasks_completed = False
-    if tax_payment:
-        result = subm_reports(page, inn, timestamp)
-        if result != "completed":
-            return result
-        tasks_completed = True
+    result = subm_reports(page, inn, timestamp)
+    if result != "completed":
+        return result
     if tax_payment or tax_375:
         result = task_1(page, inn, timestamp, context, tax_payment, tax_375)
         if result != "completed":
